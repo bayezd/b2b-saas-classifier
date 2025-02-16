@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { submitBatchJob, getBatchStatus, getBatchResultsUrl } from '@/lib/api'
 import type { Company, BatchJob } from '@/lib/types'
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function BatchPage() {
   const [companies, setCompanies] = useState<Company[]>([])
@@ -48,7 +49,7 @@ export default function BatchPage() {
         setCompanies(parsedCompanies)
       },
       error: (error) => {
-        setError(\`Failed to parse CSV: \${error.message}\`)
+        setError(`Failed to parse CSV: ${error.message}`)
       },
     })
   }, [])
@@ -98,125 +99,138 @@ export default function BatchPage() {
   }, [jobId])
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Batch Classification</h1>
-
-      {!jobId && (
-        <>
-          <div
-            {...getRootProps()}
-            className={\`
-              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-              \${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
-              \${companies.length > 0 ? 'border-green-500 bg-green-50' : ''}
-            \`}
-          >
-            <input {...getInputProps()} />
-            {companies.length > 0 ? (
-              <div>
-                <p className="text-lg font-medium text-green-700">
-                  ✅ {companies.length} companies loaded
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Drop a new file to replace
-                </p>
-              </div>
-            ) : isDragActive ? (
-              <p className="text-lg">Drop the CSV file here</p>
-            ) : (
-              <div>
-                <p className="text-lg">
-                  Drag & drop a CSV file here, or click to select
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  CSV should have company name and domain in first two columns
-                </p>
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              {error}
-            </div>
-          )}
-
-          {companies.length > 0 && (
-            <div className="mt-8">
-              <Button
-                onClick={handleSubmit}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <>
-                    <Spinner className="mr-2" />
-                    Uploading...
-                  </>
-                ) : (
-                  \`Classify \${companies.length} Companies\`
-                )}
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-
-      {jobId && batchStatus && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Batch Job Status</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Progress</span>
-                <span className="font-medium">
-                  {batchStatus.processedCount} / {batchStatus.totalCompanies}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-4">
-                <div
-                  className={\`rounded-full h-4 \${
-                    batchStatus.status === 'completed'
-                      ? 'bg-green-500'
-                      : batchStatus.status === 'failed'
-                      ? 'bg-red-500'
-                      : 'bg-blue-500'
-                  }\`}
-                  style={{ width: \`\${batchStatus.progress}%\` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span
-                className={\`px-3 py-1 rounded-full text-sm font-medium \${
-                  batchStatus.status === 'completed'
-                    ? 'bg-green-100 text-green-700'
-                    : batchStatus.status === 'failed'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-blue-100 text-blue-700'
-                }\`}
-              >
-                {batchStatus.status.charAt(0).toUpperCase() +
-                  batchStatus.status.slice(1)}
-              </span>
-            </div>
-
-            {batchStatus.status === 'completed' && (
-              <div className="pt-4">
-                <a
-                  href={getBatchResultsUrl(jobId)}
-                  className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                  download
-                >
-                  📥 Download Results
-                </a>
-              </div>
-            )}
+    <ErrorBoundary
+      fallback={
+        <div className="container flex min-h-[400px] items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Batch Processing Error</h2>
+            <p className="mt-2 text-muted-foreground">
+              There was an error with the batch processing. Please try again.
+            </p>
           </div>
         </div>
-      )}
-    </div>
+      }
+    >
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Batch Classification</h1>
+
+        {!jobId && (
+          <>
+            <div
+              {...getRootProps()}
+              className={`
+                border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
+                ${companies.length > 0 ? 'border-green-500 bg-green-50' : ''}
+              `}
+            >
+              <input {...getInputProps()} />
+              {companies.length > 0 ? (
+                <div>
+                  <p className="text-lg font-medium text-green-700">
+                    ✅ {companies.length} companies loaded
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Drop a new file to replace
+                  </p>
+                </div>
+              ) : isDragActive ? (
+                <p className="text-lg">Drop the CSV file here</p>
+              ) : (
+                <div>
+                  <p className="text-lg">
+                    Drag & drop a CSV file here, or click to select
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    CSV should have company name and domain in first two columns
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {error}
+              </div>
+            )}
+
+            {companies.length > 0 && (
+              <div className="mt-8">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isUploading}
+                  className="w-full"
+                >
+                  {isUploading ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Uploading...
+                    </>
+                  ) : (
+                    `Classify ${companies.length} Companies`
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {jobId && batchStatus && (
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Batch Job Status</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Progress</span>
+                  <span className="font-medium">
+                    {batchStatus.processedCount} / {batchStatus.totalCompanies}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4">
+                  <div
+                    className={`rounded-full h-4 ${
+                      batchStatus.status === 'completed'
+                        ? 'bg-green-500'
+                        : batchStatus.status === 'failed'
+                        ? 'bg-red-500'
+                        : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${batchStatus.progress}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    batchStatus.status === 'completed'
+                      ? 'bg-green-100 text-green-700'
+                      : batchStatus.status === 'failed'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}
+                >
+                  {batchStatus.status.charAt(0).toUpperCase() +
+                    batchStatus.status.slice(1)}
+                </span>
+              </div>
+
+              {batchStatus.status === 'completed' && (
+                <div className="pt-4">
+                  <a
+                    href={getBatchResultsUrl(jobId)}
+                    className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                    download
+                  >
+                    📥 Download Results
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   )
 }

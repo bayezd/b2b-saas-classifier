@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { classifyCompany } from '@/lib/api'
 import type { ClassificationResult } from '@/lib/types'
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function ClassifyPage() {
   const [domain, setDomain] = useState('')
@@ -30,97 +31,110 @@ export default function ClassifyPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Classify Company</h1>
-      
-      <form onSubmit={handleSubmit} className="max-w-xl">
-        <div className="flex gap-4 mb-8">
-          <Input
-            type="text"
-            placeholder="Enter company domain (e.g., company.com)"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={isLoading || !domain}>
-            {isLoading ? <Spinner /> : 'Classify'}
-          </Button>
-        </div>
-      </form>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-700">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="grid gap-4">
-            <div>
-              <h3 className="font-semibold text-gray-900">Classification</h3>
-              <p className="text-2xl font-bold text-blue-600">{result.classification}</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900">Confidence</h3>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-4">
-                  <div
-                    className="bg-blue-600 rounded-full h-4"
-                    style={{ width: `${result.confidence * 100}%` }}
-                  />
-                </div>
-                <span className="text-sm font-medium">
-                  {Math.round(result.confidence * 100)}%
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-gray-900">Categories</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {result.metadata.categories.map((category) => (
-                  <span
-                    key={category}
-                    className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                  >
-                    {category}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-gray-900">Features</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {result.metadata.features.map((feature) => (
-                  <span
-                    key={feature}
-                    className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm"
-                  >
-                    {feature}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {result.metadata.description && (
-              <div>
-                <h3 className="font-semibold text-gray-900">Description</h3>
-                <p className="text-gray-600 mt-1">{result.metadata.description}</p>
-              </div>
-            )}
-
-            {result.cached && (
-              <div className="text-sm text-gray-500 mt-2">
-                ⚡️ Results loaded from cache
-              </div>
-            )}
+    <ErrorBoundary
+      fallback={
+        <div className="container flex min-h-[400px] items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Classification Error</h2>
+            <p className="mt-2 text-muted-foreground">
+              There was an error processing your request. Please try again.
+            </p>
           </div>
         </div>
-      )}
-    </div>
+      }
+    >
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Classify Company</h1>
+        
+        <form onSubmit={handleSubmit} className="max-w-xl">
+          <div className="flex gap-4 mb-8">
+            <Input
+              type="text"
+              placeholder="Enter company domain (e.g., company.com)"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !domain}>
+              {isLoading ? <Spinner /> : 'Classify'}
+            </Button>
+          </div>
+        </form>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-700">
+            {error}
+          </div>
+        )}
+
+        {result && (
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="grid gap-4">
+              <div>
+                <h3 className="font-semibold text-gray-900">Classification</h3>
+                <p className="text-2xl font-bold text-blue-600">{result.classification}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900">Confidence</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-4">
+                    <div
+                      className="bg-blue-600 rounded-full h-4"
+                      style={{ width: `${result.confidence * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium">
+                    {Math.round(result.confidence * 100)}%
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900">Categories</h3>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {result.metadata.categories.map((category) => (
+                    <span
+                      key={category}
+                      className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900">Features</h3>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {result.metadata.features.map((feature) => (
+                    <span
+                      key={feature}
+                      className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm"
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {result.metadata.description && (
+                <div>
+                  <h3 className="font-semibold text-gray-900">Description</h3>
+                  <p className="text-gray-600 mt-1">{result.metadata.description}</p>
+                </div>
+              )}
+
+              {result.cached && (
+                <div className="text-sm text-gray-500 mt-2">
+                  ⚡️ Results loaded from cache
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   )
 }
